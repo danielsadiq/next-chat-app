@@ -1,10 +1,10 @@
 import { supabase } from "./supabase";
 
 interface ConversationType {
-  id: string;
-  type: string;
-  title: string;
-  created_at: string;
+    id: string;
+    type: string;
+    title: string;
+    created_at: string;
   last_message_id: string;
   last_message: {
     content: string;
@@ -14,13 +14,13 @@ interface ConversationType {
       display_name: string;
     }[];
   }[];
-  participants: {
-    user_id: string;
-    profiles: {
-      id: string;
-      display_name: string;
+    participants: {
+        user_id: string;
+        profiles: {
+            id: string;
+            display_name: string;
+        }[];
     }[];
-  }[];
 }
 [];
 
@@ -67,7 +67,7 @@ export async function getUserChats(email: string) {
       title,
       created_at,
       last_message_id,
-      last_message:messages!inner (
+      last_message:messages!fk_last_message (
         content,
         created_at,
         sender_id,
@@ -92,27 +92,24 @@ export async function getUserChats(email: string) {
   // Post-process results:
   const conversations = data?.map((part) => {
     const c: ConversationType = part.conversations;
-    // Determine name to display for the chat
-    const chatName =
-      c.type === "private"
-        ? c.participants.map((p) => p.profiles).find((p) => p[0].id !== user.id)?.display_name || "Unknown"
-        : c.title;
-
-    // Prepare last message preview
-    const lastMessage = c.last_message
-      ? {
-          content: c.last_message[0].content,
-          sender: c.last_message[0].sender[0].display_name,
-          timestamp: c.last_message[0].created_at,
-        }
-      : null;
-
-    return {
-      id: c.id,
-      name: chatName,
-      type: c.type,
-      last_message: lastMessage,
-    };
+    if (c.type === "private") {
+      const other = c.participants
+        .map((p) => p.profiles)
+        .find((p) => p.id !== user.id);
+      return {
+        id: c.id,
+        name: other?.display_name || "Unknown",
+        type: "private",
+        created_at: c.created_at,
+      };
+    } else {
+      return {
+        id: c.id,
+        name: c.title,
+        type: "group",
+        created_at: c.created_at,
+      };
+    }
   });
-
+  return conversations
 }
