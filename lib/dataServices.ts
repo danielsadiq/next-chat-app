@@ -1,5 +1,29 @@
 import { supabase } from "./supabase";
 
+interface ConversationType {
+  id: string;
+  type: string;
+  title: string;
+  created_at: string;
+  last_message_id: string;
+  last_message: {
+    content: string;
+    created_at: string;
+    sender_id: string;
+    sender: {
+      display_name: string;
+    }[];
+  }[];
+  participants: {
+    user_id: string;
+    profiles: {
+      id: string;
+      display_name: string;
+    }[];
+  }[];
+}
+[];
+
 export const getUsers = async function () {
   const { data: profiles, error } = await supabase.from("profiles").select("*");
   if (error) {
@@ -9,8 +33,8 @@ export const getUsers = async function () {
   return profiles;
 };
 
-export async function getUser(id:string){
-  const {data:profile, error} = await supabase
+export async function getUser(id: string) {
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", id)
@@ -28,55 +52,67 @@ export async function getUserChats(email: string) {
     .from("profiles")
     .select("id")
     .eq("email", email)
-    .single()
+    .single();
 
-  if (userError || !user) throw userError || new Error("User not found")
+  if (userError || !user) throw userError || new Error("User not found");
 
-  // Step 2️⃣: Get all conversation IDs Daniel participates in
-  const { data: userConversations, error: convoError } = await supabase
+  const { data, error } = await supabase
     .from("participants")
-    .select("conversation_id")
-    .eq("user_id", user.id)
+    .select(
+      `
+    conversation_id,
+    conversations (
+      id,
+      type,
+      title,
+      created_at,
+      last_message_id,
+      last_message:messages!inner (
+        content,
+        created_at,
+        sender_id,
+        sender:profiles!messages_sender_id_fkey (
+          display_name
+        )
+      ),
+      participants (
+        user_id,
+        profiles (
+          id,
+          display_name
+        )
+      )
+    )
+  `
+    )
+    .eq("user_id", user.id); // must be string UUID
 
+  if (error) console.error(error);
 
-  if (convoError) throw convoError
-  const conversationIds = userConversations.map((p) => p.conversation_id)
-  if (!conversationIds.length) return []
+  // Post-process results:
+  const conversations = data?.map((part) => {
+    const c: ConversationType = part.conversations;
+    // Determine name to display for the chat
+    const chatName =
+      c.type === "private"
+        ? c.participants.map((p) => p.profiles).find((p) => p[0].id !== user.id)?.display_name || "Unknown"
+        : c.title;
 
-  const names = await Promise.all(
+    // Prepare last message preview
+    const lastMessage = c.last_message
+      ? {
+          content: c.last_message[0].content,
+          sender: c.last_message[0].sender[0].display_name,
+          timestamp: c.last_message[0].created_at,
+        }
+      : null;
 
-    conversationIds.map(async (x) => {
-      const {data} = await supabase.from("conversations").select("title").eq("id", x).single();
-      return data?.title;
-    })
-  )
-  return names
+    return {
+      id: c.id,
+      name: chatName,
+      type: c.type,
+      last_message: lastMessage,
+    };
+  });
 
-  // Step 3️⃣: Find all *other* participants (people he’s texted or who texted him)
-  // const { data: contacts, error: contactsError } = await supabase
-  //   .from("participants")
-  //   .select(`
-  //     conversation_id,
-  //     profiles (
-  //       id,
-  //       display_name,
-  //       email,
-  //       status
-  //     ),
-  //     conversation:conversations (
-  //       id,
-  //       title,
-  //       type,
-  //       last_message_id,
-  //       last_message:messages(content, created_at)
-  //     )
-  //   `)
-  //   .in("conversation_id", conversationIds)
-  //   .neq("user_id", user.id) // exclude Daniel himself
-  //   .order("conversation_id", { ascending: true })
-
-  // if (contactsError) throw contactsError
-
-  // return contacts
 }
-
