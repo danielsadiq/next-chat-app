@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +17,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { PasswordInput } from "./ui/passwordInput";
 
 type Inputs = {
@@ -28,13 +29,21 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<Inputs>();
-  const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data);
+  
+  // const onSubmit: SubmitHandler<Inputs> = (data) => {
+  async function onSubmit(data: Inputs){
+    const res = await fakeLoginApi(data);
+    if (res){
+      router.push('/chat')
+    }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -95,7 +104,8 @@ export function LoginForm({
 }
 
 // Mock API call for example
-// async function fakeLoginAPI(data: LoginFormData) {
-//   await new Promise((r) => setTimeout(r, 800))
-//   return { success: data.email === "test@example.com" && data.password === "Password123" }
-// }
+async function fakeLoginApi(data: {email:string, password:string}){
+  const {email, password} = data;
+  await new Promise((r) => setTimeout(r, 800))
+  return { success: email === "danielsadiq93@gmail.com" && password === "danielsadiq" }
+}
