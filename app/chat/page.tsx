@@ -1,4 +1,5 @@
 import { getUserChats } from "@/lib/dataServices";
+import { TimestampFormatter } from "@/utils/timeStampFormatter";
 
 export default function page() {
   return (
@@ -21,20 +22,23 @@ function Header() {
 
 async function Body() {
   const chats = await getUserChats("daniel@example.com");
-  console.log(chats)
+  console.log(chats);
 
   return (
     <main className="mt-12 p-6">
-      {chats?.map(chat => (
-        <div className="flex items-center gap-4">
-        <div className="rounded-full w-[3rem] h-[3rem] border-2 border-black"></div>
-        <div>
-          <h2 className="font-bold">{chat.name}</h2>
-          <p>The weather will be perfect</p>
+      {chats?.map((chat) => (
+        <div className="flex items-center gap-4 my-4" key={chat.id}>
+          <div className="rounded-full w-[3rem] h-[3rem] border-2 border-black">
+          </div>
+          <div className="flex-1">
+            <h2 className="font-bold">{chat.name}</h2>
+            <p>{chat.lastMessage?.content}</p>
+          </div>
+          <div className="ml-auto">
+            <span>{TimestampFormatter.format(chat.lastMessage?.timestamp)}</span>
+          </div>
         </div>
-      </div>
       ))}
-      
     </main>
   );
 }

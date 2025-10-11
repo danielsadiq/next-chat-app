@@ -92,6 +92,13 @@ export async function getUserChats(email: string) {
   // Post-process results:
   const conversations = data?.map((part) => {
     const c: ConversationType = part.conversations;
+    const lastMessage = c.last_message
+      ? {
+          content: c.last_message.content,
+          sender: c.last_message.sender.display_name,
+          timestamp: c.last_message.created_at,
+        }
+      : null;
     if (c.type === "private") {
       const other = c.participants
         .map((p) => p.profiles)
@@ -101,6 +108,7 @@ export async function getUserChats(email: string) {
         name: other?.display_name || "Unknown",
         type: "private",
         created_at: c.created_at,
+        lastMessage: lastMessage,
       };
     } else {
       return {
@@ -108,6 +116,7 @@ export async function getUserChats(email: string) {
         name: c.title,
         type: "group",
         created_at: c.created_at,
+        lastMessage: lastMessage
       };
     }
   });
