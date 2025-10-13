@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createMessage, getMessages } from "@/lib/data-services";
+import { createMessage } from "@/lib/data-services";
 import { subscribeToMessages } from "@/lib/services";
 import { useUser } from "@/context/UserContext";
 import { supabase } from "@/lib/supabase";
@@ -26,28 +26,17 @@ export default function Body({ convoId }: { convoId: string }) {
     fetchMessages();
 
     // ✅ Realtime subscription
-    const channel = supabase
-      .channel(`chat-room-${convoId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${convoId}`,
-        },
-        (payload) => {
-          console.log("📩 New message from realtime:", payload.new);
-          const newMessage = payload.new;
-          setMessages((prev) => [...prev, newMessage]);
-        }
-      )
-      .subscribe();
+    const unsubscribe = subscribeToMessages(convoId, {
+      onInsert: (newMsg) => setMessages((prev) => [...prev, newMsg]),
+      onUpdate: (updatedMsg) =>
+        setMessages((prev) =>
+          prev.map((m) => (m.id === updatedMsg.id ? updatedMsg : m))
+        ),
+      onDelete: (deletedMsg) =>
+        setMessages((prev) => prev.filter((m) => m.id !== deletedMsg.id)),
+    })
 
-    // ✅ Cleanup subscription on unmount
-    return () => {
-      if (channel) supabase.removeChannel(channel);
-    };
+    return unsubscribe;
   }, [convoId]);
 
   return (
@@ -95,11 +84,11 @@ export default function Body({ convoId }: { convoId: string }) {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function MessageBar({
   messages,
   convoId,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   messages: any[];
   convoId: string;
 }) {
