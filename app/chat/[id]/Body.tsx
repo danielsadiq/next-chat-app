@@ -1,32 +1,57 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getMessages } from "@/lib/data-services";
+import { createMessage, getMessages } from "@/lib/data-services";
 import { subscribeToMessages } from "@/lib/services";
 import { useUser } from "@/context/UserContext";
+import { supabase } from "@/lib/supabase";
 
 export default function Body({ convoId }: { convoId: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [messages, setMessages] = useState<any[]>([]);
-  const {user} = useUser();
-  console.log(user)
+  const { user } = useUser();
+  console.log(user);
 
   useEffect(() => {
     async function fetchMessages() {
-      const msgs = await getMessages(convoId);
-      setMessages(msgs);
-    }
-    fetchMessages();
-    const unsubscribe = subscribeToMessages(convoId, (newMessage) => {
-      setMessages((prev) => [...prev, newMessage]);
-    });
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*, sender:profiles(display_name)")
+        .eq("conversation_id", convoId)
+        .order("created_at", { ascending: true });
 
-    // 3️⃣ Cleanup
-    return unsubscribe;
+      if (!error) setMessages(data || []);
+    }
+
+    fetchMessages();
+
+    // ✅ Realtime subscription
+    const channel = supabase
+      .channel(`chat-room-${convoId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${convoId}`,
+        },
+        (payload) => {
+          console.log("📩 New message from realtime:", payload.new);
+          const newMessage = payload.new;
+          setMessages((prev) => [...prev, newMessage]);
+        }
+      )
+      .subscribe();
+
+    // ✅ Cleanup subscription on unmount
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
   }, [convoId]);
 
   return (
-     <div className="flex flex-col gap-3 p-4 min-h-screen bg-gray-50">
+    <div className="flex flex-col gap-3 p-4 bg-gray-50">
       {messages.map((msg) => {
         const isMine = msg.sender_id === user?.id;
 
@@ -65,45 +90,59 @@ export default function Body({ convoId }: { convoId: string }) {
           </div>
         );
       })}
-      <MessageBar messages={messages} />
+      <MessageBar messages={messages} convoId={convoId} />
     </div>
   );
 }
 
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function MessageBar({messages}: {messages: any[]}){
+function MessageBar({
+  messages,
+  convoId,
+}: {
+  messages: any[];
+  convoId: string;
+}) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const {user} = useUser();
+  const { user } = useUser();
 
   // Auto-scroll to bottom whenever new messages appear
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  function handleSend(e: React.FormEvent){
+  async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     const content = inputRef.current?.value?.trim();
     if (!content) return;
-    // onSendMessage(content);
+
+    const newMessage = {
+      conversation_id: convoId,
+      sender_id: user?.id ?? "null",
+      content,
+      type: "text",
+    };
+    await createMessage(newMessage);
     inputRef.current!.value = "";
-  };
-  return <form
-        onSubmit={handleSend}
-        className="sticky bottom-0 flex items-center gap-2 bg-white p-3 border-t border-gray-200"
+  }
+  return (
+    <form
+      onSubmit={handleSend}
+      className="sticky bottom-0 flex items-center gap-2 bg-white p-3 border-t border-gray-200"
+    >
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Type a message..."
+        className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+      />
+      <button
+        type="submit"
+        className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition"
       >
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder="Type a message..."
-          className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition"
-        >
-          Send
-        </button>
-      </form>
+        Send
+      </button>
+    </form>
+  );
 }
