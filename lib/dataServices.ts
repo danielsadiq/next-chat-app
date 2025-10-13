@@ -13,14 +13,15 @@ interface ConversationType {
     sender_id: string;
     sender: {
       display_name: string;
-    }[];
-  }[];
+    };
+  } | null;
   participants: {
     user_id: string;
     profiles: {
+      email: string;
       id: string;
       display_name: string;
-    }[];
+    };
   }[];
 }
 
@@ -47,47 +48,36 @@ export async function getUser(id: string) {
 }
 
 export async function getUserChats(email: string) {
-  // Step 1️⃣: Find Daniel’s user ID
-  const { data: user, error: userError } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("email", email)
-    .single();
-
-  if (userError || !user) throw userError || new Error("User not found");
-
   const { data, error } = await supabase
     .from("participants")
     .select(
       `
-    conversation_id,
-    conversations (
-      id,
-      type,
-      title,
-      created_at,
-      last_message_id,
-      last_message:messages!fk_last_message (
-        content,
+      conversation_id,
+      conversations (
+        id,
+        type,
+        title,
         created_at,
-        sender_id,
-        sender:profiles!messages_sender_id_fkey (
-          display_name
+        last_message_id,
+        last_message:messages!fk_last_message (
+          content,
+          created_at,
+          sender_id,
+          sender:profiles!messages_sender_id_fkey (
+            display_name
+          )
+        ),
+        participants (
+          profiles (email,display_name)
         )
       ),
-      participants (
-        user_id,
-        profiles (
-          id,
-          display_name
-        )
-      )
+      profiles!inner(email)
+    `
     )
-  `
-    )
-    .eq("user_id", user.id); // must be string UUID
+    .eq("profiles.email", email); // 👈 filter directly by email
 
   if (error) console.error(error);
+  console.log(data);
 
   // Post-process results:
   const conversations = data?.map((part) => {
@@ -99,43 +89,49 @@ export async function getUserChats(email: string) {
           timestamp: c.last_message.created_at,
         }
       : null;
+    let name = c.title;
     if (c.type === "private") {
       const other = c.participants
-        .map((p) => p.profiles)
-        .find((p) => p.id !== user.id);
-      return {
-        id: c.id,
-        name: other?.display_name || "Unknown",
-        type: "private",
-        created_at: c.created_at,
-        lastMessage: lastMessage,
-      };
-    } else {
-      return {
-        id: c.id,
-        name: c.title,
-        type: "group",
-        created_at: c.created_at,
-        lastMessage: lastMessage,
-      };
+        ?.map((p) => p.profiles)
+        .find((p) => p.email !== part.profiles[0].email);
+      name = other?.display_name || "Unknown";
     }
+
+    return {
+      id: c.id,
+      name,
+      type: "private",
+      created_at: c.created_at,
+      lastMessage: lastMessage,
+    };
   });
   return conversations;
 }
 
-export async function getConversation(id:string){
-  const { data: conversation, error } = await supabase
-    .from("conversations")
-    .select("*")
-    .eq("id", id)
-    .single();
+export async function getMessages(id: string) {
+  const { data, error } = await supabase
+    .from("messages")
+    .select(
+      `
+      id,
+      content,
+      created_at,
+      sender_id,
+      sender:profiles (
+        id,
+        display_name,
+        avatar_url
+      )
+    `
+    )
+    .eq("conversation_id", id)
+    .order("created_at", { ascending: true });
   if (error) {
-    console.error(error);
-    throw new Error("Users could not be fetched");
+    console.error("Error fetching messages:", error);
+    return [];
   }
-  console.log(conversation)
-  return conversation;
-
+  console.log(data);
+  return data;
 }
 
 export async function createUser() {
