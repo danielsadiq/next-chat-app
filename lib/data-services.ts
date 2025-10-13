@@ -87,7 +87,7 @@ export async function getUserChats(
       const lastMessage = lastMsg
         ? {
             content: lastMsg.content,
-            sender: lastMsg.sender?.display_name ?? "Unknown",
+            sender: lastMsg.sender[0]?.display_name ?? "Unknown",
             timestamp: lastMsg.created_at,
           }
         : null;
@@ -151,12 +151,11 @@ export async function getMessages(id: string) {
 }
 
 export async function createMessage(newMessage: MessageType) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("messages")
     .insert(newMessage)
     .select();
   if (error) {
-    console.log(error);
+    console.error(error);
   }
-  // console.log(data)
 }
