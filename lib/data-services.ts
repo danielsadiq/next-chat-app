@@ -159,3 +159,17 @@ export async function createMessage(newMessage: MessageType) {
     console.error(error);
   }
 }
+
+
+export async function getConversationDetails(conversationId:string){
+  const { data: conversation, error } = await supabase
+    .from("conversations")
+    .select("*")
+    .eq("id", conversationId)
+    .single();
+  if (error) {
+    console.error(error);
+    throw new Error("Users could not be fetched");
+  }
+  return conversation;
+}
