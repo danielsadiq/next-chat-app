@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { createMessage } from "@/lib/data-services";
+import { useEffect, useState } from "react";
 import { subscribeToMessages } from "@/lib/services";
 import { useUser } from "@/context/UserContext";
 import { supabase } from "@/lib/supabase";
@@ -10,7 +9,6 @@ export default function Body({ convoId }: { convoId: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [messages, setMessages] = useState<any[]>([]);
   const { user } = useUser();
-  console.log(user);
 
   useEffect(() => {
     async function fetchMessages() {
@@ -26,15 +24,7 @@ export default function Body({ convoId }: { convoId: string }) {
     fetchMessages();
 
     // ✅ Realtime subscription
-    const unsubscribe = subscribeToMessages(convoId, {
-      onInsert: (newMsg) => setMessages((prev) => [...prev, newMsg]),
-      onUpdate: (updatedMsg) =>
-        setMessages((prev) =>
-          prev.map((m) => (m.id === updatedMsg.id ? updatedMsg : m))
-        ),
-      onDelete: (deletedMsg) =>
-        setMessages((prev) => prev.filter((m) => m.id !== deletedMsg.id)),
-    })
+    const unsubscribe = subscribeToMessages(convoId, (newMessage) =>setMessages((prev) =>[...prev, newMessage]))
 
     return unsubscribe;
   }, [convoId]);
@@ -79,59 +69,8 @@ export default function Body({ convoId }: { convoId: string }) {
           </div>
         );
       })}
-      <MessageBar messages={messages} convoId={convoId} />
     </div>
   );
 }
 
-function MessageBar({
-  messages,
-  convoId,
-}: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  messages: any[];
-  convoId: string;
-}) {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { user } = useUser();
 
-  // Auto-scroll to bottom whenever new messages appear
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  async function handleSend(e: React.FormEvent) {
-    e.preventDefault();
-    const content = inputRef.current?.value?.trim();
-    if (!content) return;
-
-    const newMessage = {
-      conversation_id: convoId,
-      sender_id: user?.id ?? "null",
-      content,
-      type: "text",
-    };
-    await createMessage(newMessage);
-    inputRef.current!.value = "";
-  }
-  return (
-    <form
-      onSubmit={handleSend}
-      className="sticky bottom-0 flex items-center gap-2 bg-white p-3 border-t border-gray-200"
-    >
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder="Type a message..."
-        className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
-      <button
-        type="submit"
-        className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition"
-      >
-        Send
-      </button>
-    </form>
-  );
-}
