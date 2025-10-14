@@ -11,7 +11,7 @@ interface User {
 
 interface UserContextType {
   user: User | null;
-  setUser?: (user: User | null) => void;
+  setUser: (user: User | null) => void;
 }
 
 const UserContext = createContext({} as UserContextType);

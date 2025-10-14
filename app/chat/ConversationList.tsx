@@ -1,20 +1,15 @@
-import { getUserChats } from "@/lib/data-services";
+"use client";
+
+import { ConversationSummary } from "@/lib/data-services";
 import { TimestampFormatter } from "@/utils/timeStampFormatter";
+import { Link } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
-import HomeHeader from "./HomeHeader";
 
-export default function page() {
-  return (
-    <div className="max-w-lg md:max-w-xl mx-auto py-12 space-y-6">
-      <HomeHeader />
-      <Conversations />
-    </div>
-  );
-}
-
-async function Conversations() {
-  const chats = await getUserChats("daniel@example.com");
+export default function ConversationList({
+  chats,
+}: {
+  chats: ConversationSummary[];
+}) {
   return (
     <main>
       {chats?.map((chat) => (

@@ -9,7 +9,7 @@ export class TimestampFormatter {
    * - Older: shows date "10/06/2025"
    * @param dateString ISO string or Date object
    */
-  static format(dateString: string | Date): string {
+  static format(dateString: string | Date | string): string {
     const date = typeof dateString === "string" ? new Date(dateString) : dateString;
 
     if (isToday(date)) {

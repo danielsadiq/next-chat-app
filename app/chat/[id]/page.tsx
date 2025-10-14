@@ -1,4 +1,8 @@
-import Body from "./Body";
+import { Suspense } from "react";
+import Header from "./components/Header";
+import MessageBar from "./components/MessageBar";
+import Spinner from "@/components/Spinner";
+import Body from "./components/Body";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -6,20 +10,20 @@ type PageProps = {
 
 export default async function Page({ params }: PageProps) {
   const { id } = await params;
-  return (
-    <div className="max-w-lg md:max-w-xl mx-auto my-6">
-      <Header/>
-      <Body convoId={id} />
-    </div>
-  );
-}
 
-function Header() {
   return (
-    <div className="flex justify-between items-center">
-      <div className="rounded-full w-[3rem] h-[3rem] flex items-center">{"<"}</div>
-      <h1 className="text-3xl font-bold">Daniel</h1>
-      <div className="rounded-full w-[3rem] h-[3rem] border-2 border-black"></div>
+    <div className="max-w-lg md:max-w-xl mx-auto flex flex-col min-h-screen">
+      <Header />
+      <div className="flex-1 flex items-center justify-center">
+        <Suspense
+          fallback={
+            <Spinner/>
+          }
+        >
+          <Body convoId={id} />
+        </Suspense>
+      </div>
+      <MessageBar convoId={id} />
     </div>
   );
 }

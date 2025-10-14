@@ -24,7 +24,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   return (
     <UserProvider>
       <ChatInitializer/>
-      <div className="flex h-screen">
+      <div className="h-screen">
         {children}
       </div>
     </UserProvider>

@@ -21,6 +21,7 @@ interface ConversationType {
       email: string;
       id: string;
       display_name: string;
+      avatar_url: string;
     };
   }[];
 }
@@ -31,11 +32,12 @@ interface LastMessage {
   timestamp: string;
 }
 
-interface ConversationSummary {
+export interface ConversationSummary {
   id: string;
   name: string;
   type: string;
   created_at: string;
+  avatar_url: string;
   lastMessage: LastMessage | null;
 }
 
@@ -53,7 +55,7 @@ export async function getUserChats(
         title,
         created_at,
         participants (
-          profiles (email,display_name)
+          profiles (email,display_name,avatar_url)
         )
       ),
       profiles!inner(email)
@@ -66,7 +68,7 @@ export async function getUserChats(
 
   // Post-process results:
   const conversations = await Promise.allSettled(
-    (data?? []).map(async (part) => {
+    (data ?? []).map(async (part) => {
       const c: ConversationType = part.conversations;
 
       const { data: lastMsg } = await supabase
@@ -101,13 +103,13 @@ export async function getUserChats(
       return {
         id: c.id,
         name,
+        avatar_url: other?.avatar_url,
         type: c.type,
         created_at: c.created_at,
         lastMessage: lastMessage,
       } as ConversationSummary;
     })
   );
-  console.log(conversations)
   return (
     conversations
       .filter(
@@ -124,44 +126,29 @@ export async function getUserChats(
   );
 }
 
-export async function getMessages(id: string) {
+export async function getMessages(convoId:string) {
   const { data, error } = await supabase
     .from("messages")
-    .select(
-      `
-      id,
-      content,
-      created_at,
-      sender_id,
-      sender:profiles (
-        id,
-        display_name,
-        avatar_url
-      )
-    `
-    )
-    .eq("conversation_id", id)
+    .select("*, sender:profiles(id, display_name, avatar_url)")
+    .eq("conversation_id", convoId)
     .order("created_at", { ascending: true });
-  if (error) {
-    console.error("Error fetching messages:", error);
-    return [];
-  }
-  // console.log(data);
-  return data;
+
+    if (error){
+      throw new Error("Error loading messages");
+    }
+    console.log(data)
+    return data
+
 }
 
 export async function createMessage(newMessage: MessageType) {
-  const { error } = await supabase
-    .from("messages")
-    .insert(newMessage)
-    .select();
+  const { error } = await supabase.from("messages").insert(newMessage).select();
   if (error) {
     console.error(error);
   }
 }
 
-
-export async function getConversationDetails(conversationId:string){
+export async function getConversationDetails(conversationId: string) {
   const { data: conversation, error } = await supabase
     .from("conversations")
     .select("*")
