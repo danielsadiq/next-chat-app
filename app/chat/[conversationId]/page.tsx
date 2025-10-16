@@ -5,11 +5,11 @@ import Spinner from "@/components/Spinner";
 import Body from "./components/Body";
 
 type PageProps = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ conversationId: string }>;
 };
 
 export default async function Page({ params }: PageProps) {
-  const { id } = await params;
+  const { conversationId } = await params;
 
   return (
     <div className="max-w-lg md:max-w-xl mx-auto flex flex-col min-h-screen">
@@ -20,10 +20,10 @@ export default async function Page({ params }: PageProps) {
             <Spinner/>
           }
         >
-          <Body convoId={id} />
+          <Body convoId={conversationId} />
         </Suspense>
       </div>
-      <MessageBar convoId={id} />
+      <MessageBar convoId={conversationId} />
     </div>
   );
 }
