@@ -136,7 +136,6 @@ export async function getMessages(convoId:string) {
     if (error){
       throw new Error("Error loading messages");
     }
-    console.log(data)
     return data
 
 }

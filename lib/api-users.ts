@@ -1,5 +1,27 @@
-import identicon from "github-identicon";
+import { generateImage } from "./create-user";
 import { supabase } from "./supabase";
+import { UserMetadata } from "@supabase/supabase-js";
+
+
+export async function createUser(userData: UserMetadata) {
+  const {email, username} = userData
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .insert([
+      {
+        display_name: username,
+        about: "Hey there! I'm on chatapp",
+        email,
+      },
+    ])
+    .select()
+    .single();
+  if (error) {
+    console.error(error);
+    throw new Error("User could not be created");
+  }
+  await generateImage(profile.id)
+}
 
 export const getUsers = async function () {
   const { data: profiles, error } = await supabase.from("profiles").select("*");
@@ -15,62 +37,12 @@ export async function getUser(email: string) {
     .from("profiles")
     .select("*")
     .eq("email", email)
-    .single();
-  if (error) {
+    .maybeSingle(); // 👈 use maybeSingle instead of single
+
+  if (error && error.code !== "PGRST116") {
     console.error(error);
-    throw new Error("Users could not be fetched");
-  }
-  return profile;
-}
-
-export async function createUser() {
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .insert([
-      {
-        display_name: "James",
-        about: "Hey there! I'm on chatapp",
-        email: "james@email.com",
-      },
-    ])
-    .select()
-    .single();
-  if (error) {
-    console.error(error);
-    throw new Error("User could not be created");
-  }
-  // 1. Generate avatar
-  const buffer = identicon(profile.id);
-
-  // 2. Upload to supabase storage
-  const filePath = `${profile.id}.png`;
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(filePath, buffer, {
-      cacheControl: "3600",
-      contentType: "image/png",
-      upsert: false,
-    });
-  if (uploadError) {
-    console.log(uploadError);
+    throw new Error("Failed to fetch user profile");
   }
 
-  // 🌐 3. Get public URL
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("avatars").getPublicUrl(filePath);
-  console.log(publicUrl);
-
-  // 🧾 4. Save to profiles table
-  const { error: dbError } = await supabase
-    .from("profiles")
-    .update({
-      avatar_url: publicUrl,
-    })
-    .eq("id", profile.id);
-
-  if (dbError) {
-    console.error(dbError);
-  }
-  return profile;
+  return profile; // returns null if no match, instead of throwing
 }

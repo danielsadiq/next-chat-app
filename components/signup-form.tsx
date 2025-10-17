@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Github, Mail } from "lucide-react";
 import Link from "next/link";
+import { AuthError } from "@supabase/supabase-js";
+import { generateImage } from "@/lib/create-user";
 
 export default function SignupForm({
   className,
@@ -26,52 +28,72 @@ export default function SignupForm({
   const router = useRouter();
   const supabase = createClientComponentClient();
 
+  // form states
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // error states
+  const [emailError, setEmailError] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [formError, setFormError] = useState("");
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setLoading(true);
+    setFormError("");
+    setEmailError("");
+    setPasswordError("");
+    setUsernameError("");
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+    // Basic validation
+    if (username.trim().length < 3) {
+      setUsernameError("Username must be at least 3 characters long.");
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (password.trim().length < 6) {
+      setPasswordError("Password must be at least 6 characters long.");
+      setLoading(false);
+      return;
+    }
+
     try {
       // 👇 Create user in Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            username,
-          },
-        },
+        options: { data: { display_name: username } },
       });
+      console.log(data.user?.user_metadata)
+      if (data.user){
+        await generateImage(data.user.id)
+      }
 
-      if (error) throw error;
 
-      // Optionally, create a profile in the 'profiles' table
-      if (data?.user) {
-        await supabase.from("profiles").upsert({
-          id: data.user.id,
-          email,
-          display_name: username,
-        });
+      if (error) {
+        console.log(error)
+        throw error;
       }
 
       // Redirect after signup
       router.push("/chat");
       router.refresh();
-    } catch (err: any) {
-      console.error("Signup error:", err.message);
-      setError(err.message || "Unable to sign up. Please try again.");
+    } catch (err) {
+      const error = err as AuthError;
+
+      if (error.message.includes("User already registered")) {
+        setEmailError(
+          "An account with this email already exists. Please log in instead."
+        );
+      } else if (error.message.toLowerCase().includes("email")) {
+        setEmailError("Please enter a valid email address.");
+      } else {
+        setFormError(error.message || "Unable to sign up. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -84,7 +106,7 @@ export default function SignupForm({
         redirectTo: `${location.origin}/auth/callback`,
       },
     });
-    if (error) setError(error.message);
+    if (error) setFormError(error.message);
   };
 
   return (
@@ -104,11 +126,14 @@ export default function SignupForm({
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
-                placeholder="daniel_sadiq"
+                placeholder="_danielsadiq"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
               />
+              {usernameError && (
+                <p className="text-sm text-red-500">{usernameError}</p>
+              )}
             </div>
 
             {/* Email */}
@@ -122,6 +147,9 @@ export default function SignupForm({
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
+              {emailError && (
+                <p className="text-sm text-red-500">{emailError}</p>
+              )}
             </div>
 
             {/* Password */}
@@ -134,8 +162,21 @@ export default function SignupForm({
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              {passwordError && (
+                <p className="text-sm text-red-500">{passwordError}</p>
+              )}
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+
+            {/* Form-level error */}
+            {formError && (
+              <div className="text-sm text-red-500 text-center">{formError}</div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full hover:bg-blue-600 cursor-pointer"
+              disabled={loading}
+            >
               {loading ? "Creating account..." : "Sign Up"}
             </Button>
 

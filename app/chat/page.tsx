@@ -1,53 +1,27 @@
-import { getUserChats } from "@/lib/data-services";
-import { TimestampFormatter } from "@/utils/timeStampFormatter";
-import Image from "next/image";
-import Link from "next/link";
-import HomeHeader from "./HomeHeader";
+// import { getUserChats } from "@/lib/data-services";
+// import HomeHeader from "./HomeHeader";
+// import Conversation from "./Conversation";
+import { getUser } from "@/lib/api-users";
 
-export default function page() {
+export default async function page() {
+  const user = await getUser("danielsadiq937@gmail.com");
+  console.log(user)
   return (
     <div className="max-w-lg md:max-w-xl mx-auto py-12 space-y-6">
-      <HomeHeader />
-      <Conversations />
+      {/* <HomeHeader /> */}
+      {/* <Conversations /> */}
+      Jeol
     </div>
   );
 }
 
-async function Conversations() {
-  const chats = await getUserChats("daniel@example.com");
-  return (
-    <main>
-      {chats?.map((chat) => (
-        <div className="flex items-center gap-4 my-4" key={chat.id}>
-          <div className="rounded-full w-[3rem] h-[3rem] border-1 border-black relative">
-            {chat?.avatar_url ? (
-              <Image
-                src={chat.avatar_url}
-                alt="User avatar"
-                fill
-                className="object-cover rounded-full"
-              />
-            ) : (
-              <div className="w-full h-full rounded-full bg-gray-300 flex items-center justify-center text-xl font-bold">
-                {chat?.name?.charAt(0)?.toUpperCase() || "?"}
-              </div>
-            )}
-          </div>
-          <div className="flex-1">
-            <Link href={`/chat/${chat.id}`}>
-              <h2 className="font-bold">{chat.name}</h2>
-            </Link>
-            <p>{chat.lastMessage?.content}</p>
-          </div>
-          <div className="ml-auto">
-            <span>
-              {TimestampFormatter.format(
-                chat.lastMessage?.timestamp ?? "today"
-              )}
-            </span>
-          </div>
-        </div>
-      ))}
-    </main>
-  );
-}
+// async function Conversations() {
+//   const chats = await getUserChats("danielsadiq93@gmail.com");
+//   return (
+//     <main>
+//       {chats?.map((chat) => (
+//         <Conversation chat={chat} key={chat.id} />
+//       ))}
+//     </main>
+//   );
+// }
