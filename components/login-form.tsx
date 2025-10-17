@@ -9,8 +9,10 @@ import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/ui/passwordInput"; // if you already have one
 import { supabase } from "@/lib/supabase";
 import { AuthError } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<AuthError | null>(null);
@@ -24,9 +26,15 @@ export default function LoginForm({ className, ...props }: React.HTMLAttributes<
     try {
       // TODO: replace with your Supabase login logic
       if (!email || !password) throw new Error("Please fill in all fields");
-      console.log("Logging in with:", { email, password });
       const {error: loginError} = await supabase.auth.signInWithPassword({ email, password });
-      if (loginError) setError(loginError)
+
+      if (loginError) {
+        setError(loginError)
+        throw loginError
+      }
+      router.push('/chat');
+      router.refresh();
+      
     } catch (err) {
       console.log(err)
     } finally {
