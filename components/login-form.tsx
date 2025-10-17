@@ -1,47 +1,36 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { useState } from "react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import { PasswordInput } from "./ui/passwordInput";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { PasswordInput } from "@/components/ui/passwordInput"; // if you already have one
+import { supabase } from "@/lib/supabase";
+import { AuthError } from "@supabase/supabase-js";
 
-type Inputs = {
-  email: string;
-  password: string;
-};
+export default function LoginForm({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<AuthError | null>(null);
+  const [loading, setLoading] = useState(false);
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  const router = useRouter();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<Inputs>();
-  
-  // const onSubmit: SubmitHandler<Inputs> = (data) => {
-  async function onSubmit(data: Inputs){
-    const res = await fakeLoginApi(data);
-    if (res){
-      router.push('/chat')
+    try {
+      // TODO: replace with your Supabase login logic
+      if (!email || !password) throw new Error("Please fill in all fields");
+      console.log("Logging in with:", { email, password });
+      const {error: loginError} = await supabase.auth.signInWithPassword({ email, password });
+      if (loginError) setError(loginError)
+    } catch (err) {
+      console.log(err)
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,62 +39,56 @@ export function LoginForm({
       <Card>
         <CardHeader className="text-center">
           <CardTitle>Login to your account</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
+          <CardDescription>Enter your email and password to continue</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  {...register("email")}
-                />
-                <FieldDescription>
-                  {errors.email && <span>This field is required</span>}
-                </FieldDescription>
-              </Field>
-              <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <a
-                    href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
-                <PasswordInput
-                id="password"
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                {...register("password")}
-                />
-                <FieldDescription>
-                  {errors.password && <span>This field is required</span>}
-                </FieldDescription>
-              </Field>
-              <Field>
-                <Button type="submit">Login</Button>
-                <FieldDescription className="text-center">
-                  Don&apos;t have an account? <a href="#">Sign up</a>
-                </FieldDescription>
-              </Field>
-            </FieldGroup>
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <Label htmlFor="password">Password</Label>
+                <a
+                  href="#"
+                  className="ml-auto text-sm text-muted-foreground hover:underline underline-offset-4"
+                >
+                  Forgot password?
+                </a>
+              </div>
+              <PasswordInput
+                id="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            {error && <p className="text-sm text-red-500">{error.message}</p>}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Logging in..." : "Login"}
+            </Button>
+
+            <p className="text-center text-sm text-muted-foreground mt-2">
+              Don&apos;t have an account?{" "}
+              <a href="#" className="text-primary underline-offset-4 hover:underline">
+                Sign up
+              </a>
+            </p>
           </form>
         </CardContent>
       </Card>
     </div>
   );
-}
-
-// Mock API call for example
-async function fakeLoginApi(data: {email:string, password:string}){
-  const {email, password} = data;
-  await new Promise((r) => setTimeout(r, 800))
-  return { success: email === "danielsadiq93@gmail.com" && password === "danielsadiq" }
 }
