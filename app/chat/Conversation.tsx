@@ -1,20 +1,12 @@
-"use client";
-
 import { ConversationSummary } from "@/lib/data-services";
 import { TimestampFormatter } from "@/utils/timeStampFormatter";
-import { Link } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
-export default function ConversationList({
-  chats,
-}: {
-  chats: ConversationSummary[];
-}) {
+export default function Conversation({chat}: {chat: ConversationSummary}) {
   return (
-    <main>
-      {chats?.map((chat) => (
-        <div className="flex items-center gap-4 my-4" key={chat.id}>
-          <div className="rounded-full w-[3rem] h-[3rem] border-1 border-black relative">
+    <div className="flex items-center gap-4 my-4" key={chat.id}>
+          <div className="rounded-full w-12 h-12 border-1 border-black relative">
             {chat?.avatar_url ? (
               <Image
                 src={chat.avatar_url}
@@ -29,7 +21,13 @@ export default function ConversationList({
             )}
           </div>
           <div className="flex-1">
-            <Link href={`/chat/${chat.id}`}>
+            <Link href={{
+              pathname: `/chat/${chat.id}`,
+              query: {
+                name: chat.name,
+                image: chat.avatar_url,
+              }
+              }}>
               <h2 className="font-bold">{chat.name}</h2>
             </Link>
             <p>{chat.lastMessage?.content}</p>
@@ -42,7 +40,5 @@ export default function ConversationList({
             </span>
           </div>
         </div>
-      ))}
-    </main>
-  );
+  )
 }
