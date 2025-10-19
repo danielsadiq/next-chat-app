@@ -2,11 +2,13 @@
 
 import { useUser } from "@/context/UserContext";
 import { createMessage } from "@/lib/data-services";
+import { SendHorizonal } from "lucide-react";
 import { useRef } from "react";
 
 export default function MessageBar({convoId}: {convoId:string}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const {user} = useUser();
+
   // useEffect(() => {
   //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   //   }, [messages]);
@@ -37,9 +39,9 @@ export default function MessageBar({convoId}: {convoId:string}) {
       />
       <button
         type="submit"
-        className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition"
+        className="bg-blue-500 text-white px-4 py-4 rounded-full hover:bg-blue-600 transition"
       >
-        Send
+        <SendHorizonal/>
       </button>
     </form>
   )
