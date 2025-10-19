@@ -1,16 +1,18 @@
-import { getCurrentUser } from "@/lib/auth";
+import { getUser } from "@/lib/api-users";
+import { PencilLineIcon } from "lucide-react";
 import Image from "next/image";
 
-export default async function HomeHeader() {
-  const user = await getCurrentUser();
+export default async function HomeHeader({userId}: {userId:string}) {
+  const user = await getUser(userId);
   return (
     <div className="flex justify-between">
-      <div className="rounded-full w-[3rem] h-[3rem] border-1 border-black relative">
+      <div className="rounded-full w-12 h-12 border-1 border-black relative">
         {user?.avatar_url ? (
           <Image
             src={user.avatar_url}
             alt="User avatar"
             fill
+            sizes="48px"
             className="object-cover rounded-full"
           />
         ) : (
@@ -20,7 +22,10 @@ export default async function HomeHeader() {
         )}
       </div>
       <h1 className="text-3xl font-bold">{user?.display_name}</h1>
-      <div className="rounded-full w-[3rem] h-[3rem] border-1 border-black"></div>
+      <div className="rounded-full w-12 h-12 border-1 border-black flex items-center justify-center cursor-pointer">
+        <PencilLineIcon size={30} />
+      </div>
+      
     </div>
   );
 }
