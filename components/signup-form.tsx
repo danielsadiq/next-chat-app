@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/passwordInput";
-import { cn } from "@/lib/utils";
+import { cn, waitForProfile } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Github, Mail } from "lucide-react";
 import Link from "next/link";
@@ -68,16 +68,14 @@ export default function SignupForm({
         password,
         options: { data: { display_name: username } },
       });
-      console.log(data.user?.user_metadata)
-      if (data.user){
-        await generateImage(data.user.id)
-      }
-
-
       if (error) {
         console.log(error)
         throw error;
       }
+      if (data.user){
+        await generateImage(data.user.id)
+      }
+      await waitForProfile(email);
 
       // Redirect after signup
       router.push("/chat");

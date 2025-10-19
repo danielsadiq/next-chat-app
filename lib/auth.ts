@@ -1,6 +1,6 @@
 import { getUser } from "./api-users";
 
-export async function getCurrentUser(){
-  const user = await getUser("daniel@example.com");
+export async function getCurrentUser(id:string){
+  const user = await getUser(id);
   return user
 }

@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/ui/passwordInput"; // if you already have one
-import { supabase } from "@/lib/supabase";
 import { AuthError } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginForm({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   const router = useRouter();
@@ -30,11 +31,12 @@ export default function LoginForm({ className, ...props }: React.HTMLAttributes<
 
       if (loginError) {
         setError(loginError)
+        console.log(loginError)
         throw loginError
       }
       router.push('/chat');
       router.refresh();
-      
+
     } catch (err) {
       console.log(err)
     } finally {
@@ -90,9 +92,9 @@ export default function LoginForm({ className, ...props }: React.HTMLAttributes<
 
             <p className="text-center text-sm text-muted-foreground mt-2">
               Don&apos;t have an account?{" "}
-              <a href="#" className="text-primary underline-offset-4 hover:underline">
+              <Link href="/signup" className="text-primary underline-offset-4 hover:underline">
                 Sign up
-              </a>
+              </Link>
             </p>
           </form>
         </CardContent>

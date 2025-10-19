@@ -32,11 +32,11 @@ export const getUsers = async function () {
   return profiles;
 };
 
-export async function getUser(email: string) {
+export async function getUser(id: string) {
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("email", email)
+    .eq("id", id)
     .maybeSingle(); // 👈 use maybeSingle instead of single
 
   if (error && error.code !== "PGRST116") {
