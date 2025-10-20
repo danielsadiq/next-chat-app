@@ -10,15 +10,8 @@ import { MoreVertical, Pencil, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MessageType } from "@/types";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import EditMessageDialog from "./EditMessageDialog";
+import DeleteMessageDialog from "./DeleteMessageDialog";
 
 export default function Message({
   msg,
@@ -28,13 +21,13 @@ export default function Message({
   isMine: boolean;
 }) {
   const [openDialog, setOpenDialog] = useState(false);
-  const [editContent, setEditContent] = useState(msg.content);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   function handleEditClick() {
-    setEditContent(msg.content);
     setOpenDialog(true);
   }
-  function handleSaveEdit(){
-    return null;
+  function onDelete() {
+    setDeleteDialogOpen(true);
   }
   return (
     <div
@@ -66,6 +59,7 @@ export default function Message({
             hour: "2-digit",
             minute: "2-digit",
           })}
+          {msg.edited_at && <span className="italic"> (edited)</span>}
         </p>
       </div>
       {isMine && (
@@ -89,7 +83,7 @@ export default function Message({
                 Edit
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => onDelete(msg.id)}
+                onClick={onDelete}
                 className="cursor-pointer text-red-600 focus:text-red-600"
               >
                 <Trash className="h-4 w-4 mr-2" />
@@ -97,33 +91,16 @@ export default function Message({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {/* Dialog for Editing */}
-          <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Edit Message</DialogTitle>
-                <DialogDescription>
-                  Update your message below and click save.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Input
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  placeholder="Edit your message..."
-                />
-                <DialogFooter className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setOpenDialog(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSaveEdit}>Save</Button>
-                </DialogFooter>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <EditMessageDialog
+            open={openDialog}
+            onOpenChange={setOpenDialog}
+            message={msg}
+          />
+          <DeleteMessageDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            messageId={msg.id}
+          />
         </div>
       )}
     </div>
