@@ -1,12 +1,15 @@
 "use client";
 
 import AvatarImage from "@/app/components/AvatarImage";
-import { useUser } from "@/context/UserContext";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function Header() {
-  const { user } = useUser();
+interface ParamsType {
+  name:string,
+  image:string,
+}
+
+export default function Header({name, image}: ParamsType) {
   const router = useRouter();
   return (
     <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
@@ -16,8 +19,8 @@ export default function Header() {
       >
         <ArrowLeft size={24} />
       </button>
-      <h1 className="text-3xl font-bold">Daniel</h1>
-      <AvatarImage imgUrl={user?.avatar_url} />
+      <h1 className="text-3xl font-bold">{name}</h1>
+      <AvatarImage imgUrl={image} />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import Image from "next/image";
 export default async function HomeHeader({userId}: {userId:string}) {
   const user = await getUser(userId);
   return (
-    <div className="flex justify-between">
+    <div className="flex justify-between h-12">
       <div className="rounded-full w-12 h-12 border-1 border-black relative">
         {user?.avatar_url ? (
           <Image
