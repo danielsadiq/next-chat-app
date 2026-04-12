@@ -9,7 +9,7 @@ export default function Home() {
               <h1 className="text-xl font-bold">Daily Chat</h1>
               <div className="flex items-center gap-1">
                 <div className="h-4 w-4 bg-green-500 animate-pulse rounded-full"></div>
-                <h1 className="text-sm text-gray-400">2 online</h1>
+                <h1 className="text-sm text-gray-400">3 online</h1>
               </div>
             </div>
             <Button>Login</Button>
