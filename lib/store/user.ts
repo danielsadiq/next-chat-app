@@ -8,6 +8,6 @@ interface UserState {
 }
 
 // Create store using the curried form of `create`
-export const useBearStore = create<UserState>()((set) => ({
+export const useUser = create<UserState>()((set) => ({
   user: undefined,
 }))
