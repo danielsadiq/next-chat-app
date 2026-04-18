@@ -1,7 +1,7 @@
 import ChatHeader from "@/components/ChatHeader";
 import InitUser from "@/lib/store/initUser";
 import { createClient } from "@/lib/supabase/server";
-import { Input } from "@/components/ui/input";
+import ChatInput from "@/components/ChatInput";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -38,9 +38,7 @@ export default async function Home() {
               })}
             </div>
           </div>
-          <div className="p-5">
-            <Input placeholder="send message" />
-          </div>
+          <ChatInput/>
         </div>
       </div>
     </>
