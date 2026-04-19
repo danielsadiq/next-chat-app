@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 
 async function ChatMessages() {
   const supabase = await createClient();
-  const {data} = await supabase.from("messages").select("*,users()");
+  const {data} = await supabase.from("messages").select("*,users(*)");
   console.log(data)
   return (
     <Suspense fallback={"loading..."}>
