@@ -1,4 +1,4 @@
-import { IMessage } from "@/lib/store/messages";
+import { IMessage, useMessageStore } from "@/lib/store/messages";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,7 +13,7 @@ import { Ellipsis } from "lucide-react";
 import { useUser } from "@/lib/store/user";
 
 function Message({ message }: { message: IMessage }) {
-  const user = useUser(state => state.user)
+  const user = useUser((state) => state.user);
   return (
     <div className="flex gap-2">
       <div>
@@ -33,7 +33,9 @@ function Message({ message }: { message: IMessage }) {
               {new Date(message.created_at).toDateString()}
             </h1>
           </div>
-          {user && message.users?.id === user.id && <MessageMenu/>}
+          {user && message.users?.id === user.id && (
+            <MessageMenu message={message} />
+          )}
         </div>
         <p className="text-gray-600">{message.text}</p>
       </div>
@@ -41,17 +43,27 @@ function Message({ message }: { message: IMessage }) {
   );
 }
 
-function MessageMenu() {
+function MessageMenu({ message }: { message: IMessage }) {
+  const setActionMessage = useMessageStore(state => state.setActionMessage)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline"><Ellipsis/></Button>
+        <Button variant="outline">
+          <Ellipsis />
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuGroup>
           <DropdownMenuLabel>Action</DropdownMenuLabel>
           <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuItem>Delete</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              document.getElementById("trigger-delete")?.click();
+              setActionMessage(message);
+            }}
+          >
+            Delete
+          </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
