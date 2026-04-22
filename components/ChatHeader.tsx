@@ -21,7 +21,6 @@ export default function ChatHeader({user}: { user: User | null |undefined }) {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.refresh();
-    console.log(user)
   }
   return (
     <div className="h-20">

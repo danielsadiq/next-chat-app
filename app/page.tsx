@@ -7,7 +7,6 @@ import ChatMessages from "@/components/ChatMessages";
 export default async function Home() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getSession();
-  console.log(data.session?.user);
   return (
     <>
       <InitUser user={data.session?.user} />
