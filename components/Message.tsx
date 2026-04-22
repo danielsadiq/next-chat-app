@@ -44,7 +44,7 @@ function Message({ message }: { message: IMessage }) {
 }
 
 function MessageMenu({ message }: { message: IMessage }) {
-  const setActionMessage = useMessageStore(state => state.setActionMessage)
+  const setActionMessage = useMessageStore((state) => state.setActionMessage);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -55,7 +55,14 @@ function MessageMenu({ message }: { message: IMessage }) {
       <DropdownMenuContent>
         <DropdownMenuGroup>
           <DropdownMenuLabel>Action</DropdownMenuLabel>
-          <DropdownMenuItem>Edit</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              document.getElementById("trigger-edit")?.click();
+              setActionMessage(message);
+            }}
+          >
+            Edit
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               document.getElementById("trigger-delete")?.click();
