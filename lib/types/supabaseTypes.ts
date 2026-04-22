@@ -17,21 +17,21 @@ export type Database = {
       messages: {
         Row: {
           created_at: string
-          id: number
+          id: string
           is_edit: boolean
           send_by: string
           text: string
         }
         Insert: {
           created_at?: string
-          id?: number
+          id?: string
           is_edit?: boolean
           send_by?: string
           text: string
         }
         Update: {
           created_at?: string
-          id?: number
+          id?: string
           is_edit?: boolean
           send_by?: string
           text?: string
