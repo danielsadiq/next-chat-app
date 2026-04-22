@@ -19,6 +19,7 @@ interface MessageState {
   setMessages: (messages: IMessage[]) => void;
   actionMessage: IMessage|undefined;
   addMessage: (message:IMessage) => void;
+  optimisticDeleteMessage: (messageId:string) => void;
   setActionMessage: (message:IMessage|undefined) => void;
 }
 
@@ -27,5 +28,8 @@ export const useMessageStore = create<MessageState>((set) => ({
   setMessages: (messages) => set({ messages }),
   actionMessage: undefined,
   addMessage: (message) => set((state) => ({messages: [...state.messages, message]})),
+  optimisticDeleteMessage: (messageId) => set((state) => ({
+    messages: state.messages.filter((m) => m.id !== messageId)
+  })),
   setActionMessage: (message) => set(() => ({actionMessage: message})),
 }));

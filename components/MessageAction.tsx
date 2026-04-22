@@ -1,3 +1,4 @@
+"uce client"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,9 +11,25 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useMessageStore } from "@/lib/store/messages"
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 export function DeleteAlert() {
   const actionMessage = useMessageStore(state => state.actionMessage);
+  const optimisticDeleteMessage = useMessageStore(state => state.optimisticDeleteMessage);
+  async function handleDeleteMessage(){
+    if (!actionMessage?.id) {
+    return; // Exit early if there's nothing to delete
+  }
+    const supabase = createClient();
+    optimisticDeleteMessage(actionMessage.id)
+    const { error }= await supabase.from("messages").delete().eq('id', actionMessage?.id);
+    if (error){
+      toast.error(error.message)
+    }else {
+      toast.success("Successfully deleted!")
+    }
+  } 
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -28,7 +45,7 @@ export function DeleteAlert() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction>Continue</AlertDialogAction>
+          <AlertDialogAction onClick={handleDeleteMessage}>Continue</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
