@@ -18,13 +18,13 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useRef } from "react";
 
 export function DeleteAlert() {
   const actionMessage = useMessageStore((state) => state.actionMessage);
@@ -73,6 +73,23 @@ export function DeleteAlert() {
 
 export function EditAlert() {
   const actionMessage = useMessageStore((state) => state.actionMessage);
+  const inputRef = useRef<HTMLInputElement>(null);
+  async function handleEdit() {
+    const supabase = createClient();
+    const text = inputRef.current?.value.trim();
+    if (text && actionMessage?.id) {
+      const {error} = await supabase
+        .from("messages")
+        .update({ text, is_edit: true })
+        .eq("id", actionMessage?.id);
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Successfully updated!");
+      }
+      document.getElementById('trigger-edit')?.click();
+    }
+  }
   return (
     <Dialog>
       <form>
@@ -81,18 +98,16 @@ export function EditAlert() {
         </DialogTrigger>
         <DialogContent className="w-full">
           <DialogHeader>
-            <DialogTitle>Edit profile</DialogTitle>
-            <DialogDescription>
-              Make changes to your profile here. Click save when you&apos;re
-              done.
-            </DialogDescription>
+            <DialogTitle>Edit Message</DialogTitle>
           </DialogHeader>
-          <Input id="name-1" name="name" defaultValue={actionMessage?.text} />
+          <Input defaultValue={actionMessage?.text} ref={inputRef} />
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit">Save changes</Button>
+            <Button type="submit" onClick={handleEdit}>
+              Save changes
+            </Button>
           </DialogFooter>
         </DialogContent>
       </form>

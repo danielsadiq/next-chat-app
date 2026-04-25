@@ -21,6 +21,7 @@ interface MessageState {
   addMessage: (message:IMessage) => void;
   optimisticDeleteMessage: (messageId:string) => void;
   setActionMessage: (message:IMessage|undefined) => void;
+  optimisticUpdateMessage: (messageId:string, newText:string) => void;
 }
 
 export const useMessageStore = create<MessageState>((set) => ({
@@ -30,6 +31,11 @@ export const useMessageStore = create<MessageState>((set) => ({
   addMessage: (message) => set((state) => ({messages: [...state.messages, message]})),
   optimisticDeleteMessage: (messageId) => set((state) => ({
     messages: state.messages.filter((m) => m.id !== messageId)
+  })),
+  optimisticUpdateMessage: (messageId, newText) => set((state) => ({
+    messages: state.messages.map((m) => 
+      m.id === messageId ? { ...m, text: newText, is_edit: true } : m
+    )
   })),
   setActionMessage: (message) => set(() => ({actionMessage: message})),
 }));
