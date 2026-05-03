@@ -73,11 +73,13 @@ export function DeleteAlert() {
 
 export function EditAlert() {
   const actionMessage = useMessageStore((state) => state.actionMessage);
+  const optimisticUpdateMessage = useMessageStore(state => state.optimisticUpdateMessage);
   const inputRef = useRef<HTMLInputElement>(null);
   async function handleEdit() {
     const supabase = createClient();
     const text = inputRef.current?.value.trim();
     if (text && actionMessage?.id) {
+      // optimisticUpdateMessage(actionMessage.id, text)
       const {error} = await supabase
         .from("messages")
         .update({ text, is_edit: true })
