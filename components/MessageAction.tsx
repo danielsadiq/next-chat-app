@@ -79,17 +79,17 @@ export function EditAlert() {
     const supabase = createClient();
     const text = inputRef.current?.value.trim();
     if (text && actionMessage?.id) {
-      // optimisticUpdateMessage(actionMessage.id, text)
       const {error} = await supabase
-        .from("messages")
-        .update({ text, is_edit: true })
-        .eq("id", actionMessage?.id);
+      .from("messages")
+      .update({ text, is_edit: true })
+      .eq("id", actionMessage?.id);
       if (error) {
         toast.error(error.message);
       } else {
         toast.success("Successfully updated!");
       }
       document.getElementById('trigger-edit')?.click();
+      optimisticUpdateMessage(actionMessage.id, text)
     }
   }
   return (
