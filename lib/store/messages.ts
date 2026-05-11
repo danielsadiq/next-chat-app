@@ -38,7 +38,7 @@ export const useMessageStore = create<MessageState>((set) => ({
   })),
   optimisticUpdateMessage: (messageId, newText) => set((state) => ({
     messages: state.messages.map((m) => 
-      m.id === messageId ? { ...m, text: newText, is_edit: true } : m
+      m.id === messageId ? { ...m, text: newText, is_edit: m.text !== newText } : m
     )
   })),
   setActionMessage: (message) => set(() => ({actionMessage: message})),
