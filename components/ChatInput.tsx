@@ -9,6 +9,7 @@ import { IMessage, useMessageStore } from "@/lib/store/messages";
 export default function ChatInput() {
   const user = useUser((state) => state.user);
   const addMessage = useMessageStore((state) => state.addMessage);
+  const setOptimisticId = useMessageStore(state => state.setOptimisticId);
   // call to supabase
   const supabase = createClient();
   async function handleSendMessage(message: string) {
@@ -26,11 +27,11 @@ export default function ChatInput() {
           user_name: user?.user_metadata.user_name ?? "Anonymous",
         },
       };
-
+      setOptimisticId(newMessage.id);
       addMessage(newMessage as IMessage);
       const { error } = await supabase
         .from("messages")
-        .insert({ text: message });
+        .insert({ id:newMessage.id, text: message });
       if (error) {
         toast.error(error.message);
       }
