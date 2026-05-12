@@ -17,6 +17,8 @@ function ListMessages() {
   } = useMessageStore((state) => state);
   const scrollRef = useRef<HTMLDivElement>(null); // Create the Ref
   const [userScrolled, setUserScrolled] = useState(false);
+  const [notification, setNotification] = useState(0);
+  const isScrolledUpRef = useRef(false);
   const supabase = createClient();
   useEffect(() => {
     const channel = supabase
@@ -32,6 +34,9 @@ function ListMessages() {
           const { eventType, new: newRecord, old: oldRecord } = payload;
           switch (eventType) {
             case "INSERT":
+              if (isScrolledUpRef.current) {
+                setNotification((current) => current + 1);
+              }
               const currentOptimisticIds =
                 useMessageStore.getState().optimisticIds;
               if (!currentOptimisticIds.includes(newRecord.id)) {
@@ -43,10 +48,12 @@ function ListMessages() {
                 if (error) {
                   toast.error(error.message);
                 } else {
+                  console.log("here 1");
                   const newMessage = { ...newRecord, users: data };
                   addMessage(newMessage as IMessage);
                 }
               }
+              break; // <--- ADD THIS BREAK
             case "UPDATE":
               optimisticUpdateMessage(newRecord.id, newRecord.text);
               break;
@@ -66,35 +73,41 @@ function ListMessages() {
       channel.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages]);
+  }, []);
 
+  // SCROLL TO BOTTOM EFFECT
   useEffect(() => {
-    // Whenever messages change, scroll the anchor into view
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+    const scrollContainer = scrollRef.current;
+    if (scrollContainer && !userScrolled) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
     }
-  }, [messages]); // Trigger this every time the messages array updates
+  }, [messages, userScrolled]);
 
   const handleOnScroll = () => {
-    const scrollContainer = scrollRef.current;
-    if (scrollContainer) {
-      const isScroll =
-        scrollContainer.scrollTop <
-        scrollContainer.scrollHeight - scrollContainer.clientHeight - 10;
-      console.log(isScroll);
-      setUserScrolled(isScroll);
+    const container = scrollRef.current;
+    if (container) {
+      const isBottom =
+        container.scrollHeight - container.scrollTop <=
+        container.clientHeight + 20;
+      const scrolledUp = !isBottom;
+      setUserScrolled(scrolledUp);
+      isScrolledUpRef.current = scrolledUp;
+      if (isBottom) {
+        setNotification(0); // Reset count if they scroll down manually
+      }
     }
   };
   const scrollToBottom = useCallback(() => {
+    setNotification(0);
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
       behavior: "smooth", // Adds that nice sliding animation
     });
   }, []);
   return (
-    <div className="flex flex-col overflow-hidden">
+    <div className="flex flex-col h-full relative overflow-hidden">
       <div
-        className="space-y-7 overflow-y-auto"
+        className="flex-1 space-y-7 overflow-y-auto p-5 pb-0"
         ref={scrollRef}
         onScroll={handleOnScroll}
       >
@@ -104,13 +117,23 @@ function ListMessages() {
         <div />
       </div>
       {userScrolled && (
-        <div className="absolute bottom-20 right-1/2">
-          <div
-            className="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center mx-auto border cursor-pointer hover:scale-110 transition-all"
-            onClick={scrollToBottom}
-          >
-            <ArrowDown />
-          </div>
+        <div className="absolute bottom-10 w-full flex left-0 right-0 justify-center">
+          {notification>0 ? (
+            <div
+              className="px-4 py-2 bg-indigo-500 rounded-full cursor-pointer hover:scale-110 transition-all text-white shadow-lg flex items-center gap-2"
+              onClick={scrollToBottom}
+            >
+              <ArrowDown size={18} />
+              <span className="font-bold text-sm">{notification} New messages</span>
+            </div>
+          ) : (
+            <div
+              className="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center mx-auto border cursor-pointer hover:scale-110 transition-all"
+              onClick={scrollToBottom}
+            >
+              <ArrowDown className="text-white" />
+            </div>
+          )}
         </div>
       )}
       <DeleteAlert />
