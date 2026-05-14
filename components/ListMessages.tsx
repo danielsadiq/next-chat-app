@@ -108,11 +108,11 @@ function ListMessages() {
   return (
     <div className="flex flex-col h-full relative overflow-hidden">
       <div
-        className="flex-1 overflow-y-auto px-5 flex flex-col gap-5"
+        className="flex-1 overflow-y-auto px-5 flex flex-col"
         ref={scrollRef}
         onScroll={handleOnScroll}
       >
-        <div className="flex-1">
+        <div className="flex-1 pb-5">
           <LoadMoreMessages/>
         </div>
         <div className="space-y-7">
