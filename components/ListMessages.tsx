@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown } from "lucide-react";
 import { toast } from "sonner";
+import LoadMoreMessages from "./LoadMoreMessages";
 
 function ListMessages() {
   const {
@@ -107,14 +108,18 @@ function ListMessages() {
   return (
     <div className="flex flex-col h-full relative overflow-hidden">
       <div
-        className="flex-1 space-y-7 overflow-y-auto p-5 pb-0"
+        className="flex-1 overflow-y-auto px-5 flex flex-col gap-5"
         ref={scrollRef}
         onScroll={handleOnScroll}
       >
+        <div className="flex-1">
+          <LoadMoreMessages/>
+        </div>
+        <div className="space-y-7">
         {messages.map((value, index) => {
           return <Message key={index} message={value} />;
         })}
-        <div />
+        </div>
       </div>
       {userScrolled && (
         <div className="absolute bottom-10 w-full flex left-0 right-0 justify-center">
