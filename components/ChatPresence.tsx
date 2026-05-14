@@ -1,43 +1,39 @@
 "use client";
 
-import { useMessageStore } from "@/lib/store/messages";
 import { useUser } from "@/lib/store/user";
 import { createClient } from "@/lib/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function ChatPresence() {
   const user = useUser((state) => state.user);
   const supabase = createClient();
+  
+  // 1. Move to local state
+  const [onlineCount, setOnlineCount] = useState(0);
+
   useEffect(() => {
+    // Prevent tracking if there is no user
+    if (!user) return;
+
     const channel = supabase.channel("room_1", {
       config: {
         presence: {
-          key: user?.id, // Use the user's ID as the unique key
+          key: user.id,
         },
       },
     });
 
     channel
       .on("presence", { event: "sync" }, () => {
-        // This runs whenever anyone joins or leaves
         const newState = channel.presenceState();
-
-        // Flatten the state to get a list of unique users
-        // (Presence can have multiple entries if a user has multiple tabs open)
+        // 2. Update local state instead of Zustand
         const onlineIds = Object.keys(newState);
-        useMessageStore.getState().setOnlineUsers(onlineIds);
-      })
-      .on("presence", { event: "join" }, ({ key, newPresences }) => {
-        console.log("User joined:", key);
-      })
-      .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
-        console.log("User left:", key);
+        setOnlineCount(onlineIds.length);
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
-          // "Track" tells Supabase to announce your presence to everyone else
           await channel.track({
-            user_id: user?.id,
+            user_id: user.id,
             online_at: new Date().toISOString(),
           });
         }
@@ -46,15 +42,19 @@ export default function ChatPresence() {
     return () => {
       channel.unsubscribe();
     };
-  }, [user]);
-  const onlineUsers = useMessageStore((state) => state.onlineUsers);
+  }, [user, supabase]);
+
+  // If no user, show a placeholder or nothing
   if (!user) {
     return <div className="h-3 w-1"></div>;
   }
+
   return (
-    <div className="flex items-center gap-1">
-      <div className="h-4 w-4 bg-green-500 animate-pulse rounded-full"></div>
-      <h1 className="text-sm text-gray-400">{onlineUsers.length} online</h1>
+    <div className="flex items-center gap-2">
+      <div className="h-4 w-4 bg-green-500 animate-pulse rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+      <h1 className="text-sm text-gray-400 font-medium">
+        {onlineCount} {onlineCount === 1 ? "person" : "people"} online
+      </h1>
     </div>
   );
 }
